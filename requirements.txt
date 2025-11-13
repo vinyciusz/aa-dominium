@@ -1,8 +1,1 @@
-runpod
-fastapi
-uvicorn
-python-docx
-PyPDF2
-scipy
-sentencepiece
-protobuf
+
