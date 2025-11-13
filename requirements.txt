@@ -3,9 +3,6 @@ fastapi
 uvicorn
 python-docx
 PyPDF2
-# Manter estes apenas para garantir versões se necessário, mas a base já deve ter:
-accelerate
-bitsandbytes
-peft
-transformers
-trl
+scipy
+sentencepiece
+protobuf
