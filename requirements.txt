@@ -1,13 +1,11 @@
-unsloth
-bitsandbytes==0.43.3
-accelerate==0.32.1
-peft
-transformers
-trl
-torch
-pandas
-datasets
-fsspec
 runpod
 fastapi
 uvicorn
+python-docx
+PyPDF2
+# Manter estes apenas para garantir versões se necessário, mas a base já deve ter:
+accelerate
+bitsandbytes
+peft
+transformers
+trl
