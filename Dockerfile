@@ -1,22 +1,31 @@
-# Usa a imagem oficial do RunPod (que já tem PyTorch e CUDA)
-FROM runpod/pytorch:2.2.1-py3.10-cuda12.1.1-devel-ubuntu22.04
+# Imagem base pequena para build rápido
+FROM python:3.10-slim
 
-# Define o diretório
-WORKDIR /workspace
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    TRANSFORMERS_CACHE=/model_cache \
+    MODEL_ID=unsloth/llama-3-8b-Instruct-bnb-4bit
 
-# Copia seus arquivos
+WORKDIR /app
+
+# Instala dependências mínimas do sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential git curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copia só requirements para aproveitar cache do Docker build (se existir)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt || true
+
+# Copia o restante do código
 COPY . .
 
-# 1. Instala as ferramentas básicas (Rápido)
-RUN pip install --upgrade pip
-RUN pip install runpod fastapi uvicorn python-docx PyPDF2 protobuf scipy
+# Copia entrypoint que baixa o modelo na primeira execução
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# 2. Instala o Unsloth SEM baixar dependências pesadas (O Pulo do Gato)
-# Usamos --no-deps para impedir que ele baixe os 15GB do PyTorch de novo
-RUN pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git" --no-deps
+# Marca diretório de cache de modelo como volume (será montado pelo Runpod)
+VOLUME [ "/model_cache" ]
 
-# 3. Instala apenas as dependências leves que o Unsloth precisa
-RUN pip install "peft" "accelerate" "bitsandbytes" "trl" "transformers"
-
-# Comando de início
-CMD [ "python3", "-u", "handler.py" ]
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["python", "app.py"]
