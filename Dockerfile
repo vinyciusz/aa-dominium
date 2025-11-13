@@ -1,18 +1,20 @@
-# --- CORREÇÃO: Usar a imagem base do Unsloth ---
-# Ela já tem PyTorch, CUDA e Unsloth instalados.
-# Isso reduz o tempo de build de 40min para 2min.
-FROM unslothai/unsloth:latest
+# Usar a imagem oficial do RunPod (Estável e Rápida)
+FROM runpod/pytorch:2.2.1-py3.10-cuda12.1.1-devel-ubuntu22.04
 
-# Define o diretório de trabalho
+# Define o diretório
 WORKDIR /workspace
 
-# Copia seus arquivos
+# Instala o Unsloth diretamente do GitHub (A forma mais segura hoje)
+RUN pip install --upgrade pip
+RUN pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
+RUN pip install --no-deps "xformers<0.0.27" "trl<0.9.0" peft accelerate bitsandbytes
+
+# Copia e instala os requisitos extras (PDF, Word, API)
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# Copia o código da IA
 COPY . .
 
-# Instala apenas as bibliotecas EXTRAS (o básico já vem na imagem)
-# O pip vai verificar o requirements.txt e pular o que já tem.
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Comando de inicialização
-ENTRYPOINT ["python3", "-m", "runpod.serverless.start", "--handler", "handler.handler"]
+# Comando de início (Chama seu script handler.py diretamente)
+CMD [ "python3", "-u", "handler.py" ]
