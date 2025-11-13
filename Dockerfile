@@ -1,20 +1,22 @@
-# Usar a imagem oficial do RunPod (Estável e Rápida)
+# Usa a imagem oficial do RunPod (que já tem PyTorch e CUDA)
 FROM runpod/pytorch:2.2.1-py3.10-cuda12.1.1-devel-ubuntu22.04
 
 # Define o diretório
 WORKDIR /workspace
 
-# Instala o Unsloth diretamente do GitHub (A forma mais segura hoje)
-RUN pip install --upgrade pip
-RUN pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
-RUN pip install --no-deps "xformers<0.0.27" "trl<0.9.0" peft accelerate bitsandbytes
-
-# Copia e instala os requisitos extras (PDF, Word, API)
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-# Copia o código da IA
+# Copia seus arquivos
 COPY . .
 
-# Comando de início (Chama seu script handler.py diretamente)
+# 1. Instala as ferramentas básicas (Rápido)
+RUN pip install --upgrade pip
+RUN pip install runpod fastapi uvicorn python-docx PyPDF2 protobuf scipy
+
+# 2. Instala o Unsloth SEM baixar dependências pesadas (O Pulo do Gato)
+# Usamos --no-deps para impedir que ele baixe os 15GB do PyTorch de novo
+RUN pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git" --no-deps
+
+# 3. Instala apenas as dependências leves que o Unsloth precisa
+RUN pip install "peft" "accelerate" "bitsandbytes" "trl" "transformers"
+
+# Comando de início
 CMD [ "python3", "-u", "handler.py" ]
